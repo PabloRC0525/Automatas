@@ -21,68 +21,60 @@ if __name__=='__main__':
     finditinerary(tickets)
     '''
 
+
 import tkinter as tk
-import networkx as nx
 
-def find_shortest_path():
-    user_tickets = tickets_entry.get("1.0", "end-1c")  # Obtener los tickets ingresados por el usuario
-    user_tickets = [line.strip() for line in user_tickets.split("\n") if line.strip()]  # Convertirlos a una lista de líneas
+def print_itinerary(dictionary, src):
+    dest = dictionary.get(src)
+    if not dest:
+        return src
+    return src + ' -> ' + print_itinerary(dictionary, dest)
+
+def find_itinerary():
+    input_text = input_entry.get("1.0", "end-1c")  # Obtiene el texto ingresado por el usuario
+    input_lines = input_text.split('\n')
+    tickets = {}
     
-    # Crear un grafo dirigido a partir de los tickets
-    G = nx.DiGraph()
-    for line in user_tickets:
-        src, dest = map(str.strip, line.split("->"))
-        G.add_edge(src, dest)
-    
-    # Obtener la lista de trayectos ingresada por el usuario
-    trayectos = trayectos_entry.get().split(',')
-    
-    # Verificar si hay al menos dos trayectos para calcular un camino
-    if len(trayectos) < 2:
-        result_text.delete(1.0, tk.END)
-        result_text.insert(tk.END, "Debe ingresar al menos dos trayectos para calcular un camino.")
-        return
-    
-    # Calcular el camino más corto
-    shortest_path = []
-    for i in range(len(trayectos) - 1):
-        src = trayectos[i].strip()
-        dest = trayectos[i + 1].strip()
-        
-        if not G.has_edge(src, dest):
-            result_text.delete(1.0, tk.END)
-            result_text.insert(tk.END, f"No se encontró un camino de {src} a {dest}.")
-            return
-        
-        shortest_path.extend(nx.shortest_path(G, source=src, target=dest, method='dijkstra')[:-1])
-    
-    # Mostrar el camino más corto en la interfaz gráfica
-    result_text.delete(1.0, tk.END)
-    result_text.insert(tk.END, "Camino más corto:\n" + " -> ".join(shortest_path))
+    for line in input_lines:
+        if line:
+            src, dest = line.strip().split(':')
+            tickets[src] = dest
 
-# Crear la ventana principal
-window = tk.Tk()
-window.title("Calcular Camino Más Corto")
+    # Encuentra el itinerario
+    destinations = set(tickets.values())
+    for k, v in tickets.items():
+        if k not in destinations:
+            initial_station = k
+            itinerary = print_itinerary(tickets, k)
+            final_station = v
+            
+            # Configurar etiquetas para mostrar estación inicial, final y el itinerario
+            initial_label.config(text=f"Inicio: {initial_station}")
+            final_label.config(text=f"Final: {final_station}")
+            result_label.config(text=f"Itinerario: {itinerary}")
+            break
 
-# Etiqueta y entrada para los tickets personalizados (uno por línea)
-tickets_label = tk.Label(window, text="Tickets personalizados (uno por línea):")
-tickets_label.pack()
-tickets_entry = tk.Text(window, height=5, width=40)
-tickets_entry.pack()
+# Crear ventana tkinter
+root = tk.Tk()
+root.title("Itinerario de Viaje")
 
-# Etiqueta y entrada para los trayectos (separados por comas)
-trayectos_label = tk.Label(window, text="Trayectos (separados por comas):")
-trayectos_label.pack()
-trayectos_entry = tk.Entry(window)
-trayectos_entry.pack()
+# Crear cuadro de entrada
+input_label = tk.Label(root, text="Ingrese los datos de destino (Formato: Origen:Destino):")
+input_label.pack()
+input_entry = tk.Text(root, height=5, width=30)
+input_entry.pack()
 
-# Botón para calcular el camino más corto
-calculate_button = tk.Button(window, text="Calcular Camino Más Corto", command=find_shortest_path)
-calculate_button.pack()
+# Botón para encontrar el itinerario
+find_button = tk.Button(root, text="Encontrar Itinerario", command=find_itinerary)
+find_button.pack()
 
-# Resultados
-result_text = tk.Text(window, height=10, width=40)
-result_text.pack()
+# Etiquetas para mostrar la estación inicial, final y el itinerario
+initial_label = tk.Label(root, text="")
+initial_label.pack()
+final_label = tk.Label(root, text="")
+final_label.pack()
+result_label = tk.Label(root, text="")
+result_label.pack()
 
-window.mainloop()
-
+# Iniciar la aplicación tkinter
+root.mainloop()
